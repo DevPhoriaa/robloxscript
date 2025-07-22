@@ -1,428 +1,344 @@
--- Perfect Optimized Fly Script with Premium UI | DevPhoria
+-- Modern Fly GUI V4
+-- Created by: DevPhoria
+-- Enhanced version with modern design and cross-platform support
+
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
-local SoundService = game:GetService("SoundService")
+local StarterGui = game:GetService("StarterGui")
 
-local LocalPlayer = Players.LocalPlayer
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
--- Enhanced Variables
-local isFlying = false
-local flySpeed = 16
-local maxSpeed = 200
-local minSpeed = 4
-local speedIncrement = 8
-local acceleration = 0.85 -- Smooth acceleration
-local deceleration = 0.92 -- Smooth deceleration
-local bodyVelocity = nil
-local bodyAngularVelocity = nil
-local connection = nil
-local gui = nil
-local isGuiVisible = true
-local currentVelocity = Vector3.new(0, 0, 0)
-local targetVelocity = Vector3.new(0, 0, 0)
-local isMoving = false
-local lastMoveTime = 0
-
--- Advanced Movement Controls
-local movement = {
-    w = false, s = false,
-    a = false, d = false,
-    space = false, shift = false,
-    -- New controls
-    q = false, e = false -- Roll left/right
-}
-
--- UI Animation Info
-local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-
--- Create Enhanced GUI with Modern Design
-local function createPremiumGUI()
-    -- Main ScreenGui with blur effect
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "PerfectFlyGUI"
-    screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-    screenGui.ResetOnSpawn = false
-    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    screenGui.DisplayOrder = 999
-    
-    -- Main Frame with gradient background
-    local mainFrame = Instance.new("Frame")
-    mainFrame.Name = "MainFrame"
-    mainFrame.Parent = screenGui
-    mainFrame.Size = UDim2.new(0, 280, 0, 160)
-    mainFrame.Position = UDim2.new(0, 50, 0, 50)
-    mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-    mainFrame.BorderSizePixel = 0
-    mainFrame.Active = true
-    mainFrame.Draggable = true
-    mainFrame.ClipsDescendants = true
-    
-    -- Gradient Background
-    local gradient = Instance.new("UIGradient")
-    gradient.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 35)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 25))
-    }
-    gradient.Rotation = 45
-    gradient.Parent = mainFrame
-    
-    -- Modern Corner Rounding
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 12)
-    corner.Parent = mainFrame
-    
-    -- Enhanced Glow Effect
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(100, 100, 255)
-    stroke.Thickness = 2
-    stroke.Transparency = 0.3
-    stroke.Parent = mainFrame
-    
-    -- Animated Glow Effect
-    local glowTween = TweenService:Create(stroke, 
-        TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
-        {Transparency = 0.7}
-    )
-    glowTween:Play()
-    
-    -- Title with Icon
-    local titleFrame = Instance.new("Frame")
-    titleFrame.Name = "TitleFrame"
-    titleFrame.Parent = mainFrame
-    titleFrame.Size = UDim2.new(1, -70, 0, 30)
-    titleFrame.Position = UDim2.new(0, 10, 0, 5)
-    titleFrame.BackgroundTransparency = 1
-    
-    local titleIcon = Instance.new("TextLabel")
-    titleIcon.Name = "TitleIcon"
-    titleIcon.Parent = titleFrame
-    titleIcon.Size = UDim2.new(0, 25, 0, 25)
-    titleIcon.Position = UDim2.new(0, 0, 0, 2)
-    titleIcon.BackgroundTransparency = 1
-    titleIcon.Text = "✈"
-    titleIcon.TextColor3 = Color3.fromRGB(100, 200, 255)
-    titleIcon.TextScaled = true
-    titleIcon.Font = Enum.Font.GothamBold
-    
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Name = "TitleLabel"
-    titleLabel.Parent = titleFrame
-    titleLabel.Size = UDim2.new(1, -30, 0, 25)
-    titleLabel.Position = UDim2.new(0, 30, 0, 2)
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "Perfect Fly | DevPhoria"
-    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    titleLabel.TextScaled = true
-    titleLabel.Font = Enum.Font.GothamBold
-    
-    -- Status Indicator
-    local statusIndicator = Instance.new("Frame")
-    statusIndicator.Name = "StatusIndicator"
-    statusIndicator.Parent = mainFrame
-    statusIndicator.Size = UDim2.new(0, 8, 0, 8)
-    statusIndicator.Position = UDim2.new(1, -45, 0, 12)
-    statusIndicator.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-    statusIndicator.BorderSizePixel = 0
-    
-    local statusCorner = Instance.new("UICorner")
-    statusCorner.CornerRadius = UDim.new(1, 0)
-    statusCorner.Parent = statusIndicator
-    
-    -- Minimize Button
-    local minimizeButton = Instance.new("TextButton")
-    minimizeButton.Name = "MinimizeButton"
-    minimizeButton.Parent = mainFrame
-    minimizeButton.Size = UDim2.new(0, 25, 0, 25)
-    minimizeButton.Position = UDim2.new(1, -60, 0, 5)
-    minimizeButton.BackgroundColor3 = Color3.fromRGB(255, 200, 50)
-    minimizeButton.BorderSizePixel = 0
-    minimizeButton.Text = "–"
-    minimizeButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-    minimizeButton.TextScaled = true
-    minimizeButton.Font = Enum.Font.GothamBold
-    
-    local minimizeCorner = Instance.new("UICorner")
-    minimizeCorner.CornerRadius = UDim.new(0, 6)
-    minimizeCorner.Parent = minimizeButton
-    
-    -- Close Button
-    local closeButton = Instance.new("TextButton")
-    closeButton.Name = "CloseButton"
-    closeButton.Parent = mainFrame
-    closeButton.Size = UDim2.new(0, 25, 0, 25)
-    closeButton.Position = UDim2.new(1, -30, 0, 5)
-    closeButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-    closeButton.BorderSizePixel = 0
-    closeButton.Text = "×"
-    closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeButton.TextScaled = true
-    closeButton.Font = Enum.Font.GothamBold
-    
-    local closeCorner = Instance.new("UICorner")
-    closeCorner.CornerRadius = UDim.new(0, 6)
-    closeCorner.Parent = closeButton
-    
-    -- Main Controls Container
-    local controlsFrame = Instance.new("Frame")
-    controlsFrame.Name = "ControlsFrame"
-    controlsFrame.Parent = mainFrame
-    controlsFrame.Size = UDim2.new(1, -20, 1, -45)
-    controlsFrame.Position = UDim2.new(0, 10, 0, 35)
-    controlsFrame.BackgroundTransparency = 1
-    
-    -- Fly Toggle Button (Enhanced)
-    local flyButton = Instance.new("TextButton")
-    flyButton.Name = "FlyButton"
-    flyButton.Parent = controlsFrame
-    flyButton.Size = UDim2.new(0, 100, 0, 35)
-    flyButton.Position = UDim2.new(0, 0, 0, 0)
-    flyButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
-    flyButton.BorderSizePixel = 0
-    flyButton.Text = "🚀 START FLY"
-    flyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    flyButton.TextScaled = true
-    flyButton.Font = Enum.Font.GothamBold
-    
-    local flyCorner = Instance.new("UICorner")
-    flyCorner.CornerRadius = UDim.new(0, 8)
-    flyCorner.Parent = flyButton
-    
-    -- Button Glow Effect
-    local flyGlow = Instance.new("UIStroke")
-    flyGlow.Color = Color3.fromRGB(50, 200, 100)
-    flyGlow.Thickness = 0
-    flyGlow.Transparency = 1
-    flyGlow.Parent = flyButton
-    
-    -- Speed Container
-    local speedContainer = Instance.new("Frame")
-    speedContainer.Name = "SpeedContainer"
-    speedContainer.Parent = controlsFrame
-    speedContainer.Size = UDim2.new(1, -110, 0, 35)
-    speedContainer.Position = UDim2.new(0, 105, 0, 0)
-    speedContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    speedContainer.BorderSizePixel = 0
-    
-    local speedCorner = Instance.new("UICorner")
-    speedCorner.CornerRadius = UDim.new(0, 8)
-    speedCorner.Parent = speedContainer
-    
-    -- Speed Label
-    local speedLabel = Instance.new("TextLabel")
-    speedLabel.Name = "SpeedLabel"
-    speedLabel.Parent = speedContainer
-    speedLabel.Size = UDim2.new(1, -60, 1, 0)
-    speedLabel.Position = UDim2.new(0, 30, 0, 0)
-    speedLabel.BackgroundTransparency = 1
-    speedLabel.Text = "⚡ " .. flySpeed
-    speedLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
-    speedLabel.TextScaled = true
-    speedLabel.Font = Enum.Font.GothamBold
-    
-    -- Speed Down Button
-    local speedDownButton = Instance.new("TextButton")
-    speedDownButton.Name = "SpeedDownButton"
-    speedDownButton.Parent = speedContainer
-    speedDownButton.Size = UDim2.new(0, 25, 0, 25)
-    speedDownButton.Position = UDim2.new(0, 5, 0, 5)
-    speedDownButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-    speedDownButton.BorderSizePixel = 0
-    speedDownButton.Text = "–"
-    speedDownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    speedDownButton.TextScaled = true
-    speedDownButton.Font = Enum.Font.GothamBold
-    
-    local speedDownCorner = Instance.new("UICorner")
-    speedDownCorner.CornerRadius = UDim.new(0, 4)
-    speedDownCorner.Parent = speedDownButton
-    
-    -- Speed Up Button
-    local speedUpButton = Instance.new("TextButton")
-    speedUpButton.Name = "SpeedUpButton"
-    speedUpButton.Parent = speedContainer
-    speedUpButton.Size = UDim2.new(0, 25, 0, 25)
-    speedUpButton.Position = UDim2.new(1, -30, 0, 5)
-    speedUpButton.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
-    speedUpButton.BorderSizePixel = 0
-    speedUpButton.Text = "+"
-    speedUpButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-    speedUpButton.TextScaled = true
-    speedUpButton.Font = Enum.Font.GothamBold
-    
-    local speedUpCorner = Instance.new("UICorner")
-    speedUpCorner.CornerRadius = UDim.new(0, 4)
-    speedUpCorner.Parent = speedUpButton
-    
-    -- Info Panel
-    local infoPanel = Instance.new("Frame")
-    infoPanel.Name = "InfoPanel"
-    infoPanel.Parent = controlsFrame
-    infoPanel.Size = UDim2.new(1, 0, 0, 35)
-    infoPanel.Position = UDim2.new(0, 0, 0, 40)
-    infoPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-    infoPanel.BorderSizePixel = 0
-    
-    local infoPanelCorner = Instance.new("UICorner")
-    infoPanelCorner.CornerRadius = UDim.new(0, 8)
-    infoPanelCorner.Parent = infoPanel
-    
-    -- Velocity Display
-    local velocityLabel = Instance.new("TextLabel")
-    velocityLabel.Name = "VelocityLabel"
-    velocityLabel.Parent = infoPanel
-    velocityLabel.Size = UDim2.new(0.5, -5, 1, 0)
-    velocityLabel.Position = UDim2.new(0, 5, 0, 0)
-    velocityLabel.BackgroundTransparency = 1
-    velocityLabel.Text = "📊 Velocity: 0.0"
-    velocityLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
-    velocityLabel.TextScaled = true
-    velocityLabel.Font = Enum.Font.Gotham
-    
-    -- Altitude Display
-    local altitudeLabel = Instance.new("TextLabel")
-    altitudeLabel.Name = "AltitudeLabel"
-    altitudeLabel.Parent = infoPanel
-    altitudeLabel.Size = UDim2.new(0.5, -5, 1, 0)
-    altitudeLabel.Position = UDim2.new(0.5, 0, 0, 0)
-    altitudeLabel.BackgroundTransparency = 1
-    altitudeLabel.Text = "🏔 Alt: 0"
-    altitudeLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
-    altitudeLabel.TextScaled = true
-    altitudeLabel.Font = Enum.Font.Gotham
-    
-    -- Instructions with better formatting
-    local instructionsLabel = Instance.new("TextLabel")
-    instructionsLabel.Name = "InstructionsLabel"
-    instructionsLabel.Parent = controlsFrame
-    instructionsLabel.Size = UDim2.new(1, 0, 0, 40)
-    instructionsLabel.Position = UDim2.new(0, 0, 0, 80)
-    instructionsLabel.BackgroundTransparency = 1
-    instructionsLabel.Text = "🎮 WASD + Space/Shift + Q/E (Roll)\n⌨️ G: Toggle GUI | F: Boost Mode"
-    instructionsLabel.TextColor3 = Color3.fromRGB(180, 180, 200)
-    instructionsLabel.TextSize = 11
-    instructionsLabel.Font = Enum.Font.Gotham
-    
-    return screenGui, mainFrame, flyButton, speedLabel, speedUpButton, speedDownButton, 
-           closeButton, minimizeButton, statusIndicator, velocityLabel, altitudeLabel, flyGlow
+-- Check if GUI already exists
+if playerGui:FindFirstChild("ModernFlyGUI") then
+    playerGui.ModernFlyGUI:Destroy()
 end
 
--- Enhanced Flying Physics
-local function startPerfectFlying()
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        return false
-    end
+-- Variables
+local flyEnabled = false
+local flySpeed = 50
+local connection = nil
+local bodyVelocity = nil
+local bodyAngularVelocity = nil
+
+-- Create main GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ModernFlyGUI"
+screenGui.Parent = playerGui
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Main container with modern design
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainContainer"
+mainFrame.Parent = screenGui
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+mainFrame.BorderSizePixel = 0
+mainFrame.Position = UDim2.new(0.02, 0, 0.4, 0)
+mainFrame.Size = UDim2.new(0, 280, 0, 160)
+mainFrame.Active = true
+mainFrame.Draggable = true
+
+-- Add corner rounding
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 12)
+mainCorner.Parent = mainFrame
+
+-- Add subtle gradient
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 35, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 35))
+}
+gradient.Rotation = 45
+gradient.Parent = mainFrame
+
+-- Header
+local header = Instance.new("Frame")
+header.Name = "Header"
+header.Parent = mainFrame
+header.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+header.BorderSizePixel = 0
+header.Size = UDim2.new(1, 0, 0, 40)
+
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 12)
+headerCorner.Parent = header
+
+-- Fix corner on bottom
+local headerBottom = Instance.new("Frame")
+headerBottom.Parent = header
+headerBottom.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+headerBottom.BorderSizePixel = 0
+headerBottom.Position = UDim2.new(0, 0, 0.5, 0)
+headerBottom.Size = UDim2.new(1, 0, 0.5, 0)
+
+-- Title
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Name = "Title"
+titleLabel.Parent = header
+titleLabel.BackgroundTransparency = 1
+titleLabel.Position = UDim2.new(0, 15, 0, 0)
+titleLabel.Size = UDim2.new(0, 180, 1, 0)
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Text = "Modern Fly GUI V4"
+titleLabel.TextColor3 = Color3.fromRGB(120, 180, 255)
+titleLabel.TextSize = 16
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Minimize button
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Name = "MinimizeButton"
+minimizeBtn.Parent = header
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 50)
+minimizeBtn.BorderSizePixel = 0
+minimizeBtn.Position = UDim2.new(1, -70, 0.5, -10)
+minimizeBtn.Size = UDim2.new(0, 20, 0, 20)
+minimizeBtn.Font = Enum.Font.GothamBold
+minimizeBtn.Text = "−"
+minimizeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+minimizeBtn.TextSize = 14
+
+local minimizeCorner = Instance.new("UICorner")
+minimizeCorner.CornerRadius = UDim.new(0, 10)
+minimizeCorner.Parent = minimizeBtn
+
+-- Close button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Name = "CloseButton"
+closeBtn.Parent = header
+closeBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+closeBtn.BorderSizePixel = 0
+closeBtn.Position = UDim2.new(1, -40, 0.5, -10)
+closeBtn.Size = UDim2.new(0, 20, 0, 20)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.TextSize = 12
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 10)
+closeCorner.Parent = closeBtn
+
+-- Content area
+local contentFrame = Instance.new("Frame")
+contentFrame.Name = "Content"
+contentFrame.Parent = mainFrame
+contentFrame.BackgroundTransparency = 1
+contentFrame.Position = UDim2.new(0, 0, 0, 40)
+contentFrame.Size = UDim2.new(1, 0, 1, -40)
+
+-- Fly toggle button
+local flyToggle = Instance.new("TextButton")
+flyToggle.Name = "FlyToggle"
+flyToggle.Parent = contentFrame
+flyToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+flyToggle.BorderSizePixel = 0
+flyToggle.Position = UDim2.new(0, 20, 0, 20)
+flyToggle.Size = UDim2.new(0, 120, 0, 35)
+flyToggle.Font = Enum.Font.GothamSemibold
+flyToggle.Text = "Enable Fly"
+flyToggle.TextColor3 = Color3.fromRGB(200, 200, 200)
+flyToggle.TextSize = 14
+
+local flyToggleCorner = Instance.new("UICorner")
+flyToggleCorner.CornerRadius = UDim.new(0, 8)
+flyToggleCorner.Parent = flyToggle
+
+-- Speed controls container
+local speedContainer = Instance.new("Frame")
+speedContainer.Name = "SpeedContainer"
+speedContainer.Parent = contentFrame
+speedContainer.BackgroundTransparency = 1
+speedContainer.Position = UDim2.new(0, 20, 0, 70)
+speedContainer.Size = UDim2.new(1, -40, 0, 35)
+
+-- Speed label
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Name = "SpeedLabel"
+speedLabel.Parent = speedContainer
+speedLabel.BackgroundTransparency = 1
+speedLabel.Size = UDim2.new(0, 60, 1, 0)
+speedLabel.Font = Enum.Font.Gotham
+speedLabel.Text = "Speed:"
+speedLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+speedLabel.TextSize = 12
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Speed decrease button
+local speedDown = Instance.new("TextButton")
+speedDown.Name = "SpeedDown"
+speedDown.Parent = speedContainer
+speedDown.BackgroundColor3 = Color3.fromRGB(70, 50, 50)
+speedDown.BorderSizePixel = 0
+speedDown.Position = UDim2.new(0, 70, 0, 0)
+speedDown.Size = UDim2.new(0, 30, 1, 0)
+speedDown.Font = Enum.Font.GothamBold
+speedDown.Text = "−"
+speedDown.TextColor3 = Color3.fromRGB(255, 150, 150)
+speedDown.TextSize = 16
+
+local speedDownCorner = Instance.new("UICorner")
+speedDownCorner.CornerRadius = UDim.new(0, 6)
+speedDownCorner.Parent = speedDown
+
+-- Speed display
+local speedDisplay = Instance.new("TextLabel")
+speedDisplay.Name = "SpeedDisplay"
+speedDisplay.Parent = speedContainer
+speedDisplay.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+speedDisplay.BorderSizePixel = 0
+speedDisplay.Position = UDim2.new(0, 110, 0, 0)
+speedDisplay.Size = UDim2.new(0, 50, 1, 0)
+speedDisplay.Font = Enum.Font.GothamSemibold
+speedDisplay.Text = tostring(flySpeed)
+speedDisplay.TextColor3 = Color3.fromRGB(120, 180, 255)
+speedDisplay.TextSize = 14
+
+local speedDisplayCorner = Instance.new("UICorner")
+speedDisplayCorner.CornerRadius = UDim.new(0, 6)
+speedDisplayCorner.Parent = speedDisplay
+
+-- Speed increase button
+local speedUp = Instance.new("TextButton")
+speedUp.Name = "SpeedUp"
+speedUp.Parent = speedContainer
+speedUp.BackgroundColor3 = Color3.fromRGB(50, 70, 50)
+speedUp.BorderSizePixel = 0
+speedUp.Position = UDim2.new(0, 170, 0, 0)
+speedUp.Size = UDim2.new(0, 30, 1, 0)
+speedUp.Font = Enum.Font.GothamBold
+speedUp.Text = "+"
+speedUp.TextColor3 = Color3.fromRGB(150, 255, 150)
+speedUp.TextSize = 16
+
+local speedUpCorner = Instance.new("UICorner")
+speedUpCorner.CornerRadius = UDim.new(0, 6)
+speedUpCorner.Parent = speedUp
+
+-- Creator credit
+local creditLabel = Instance.new("TextLabel")
+creditLabel.Name = "Credit"
+creditLabel.Parent = mainFrame
+creditLabel.BackgroundTransparency = 1
+creditLabel.Position = UDim2.new(0, 0, 1, -20)
+creditLabel.Size = UDim2.new(1, 0, 0, 20)
+creditLabel.Font = Enum.Font.Gotham
+creditLabel.Text = "Created by DevPhoria"
+creditLabel.TextColor3 = Color3.fromRGB(100, 100, 120)
+creditLabel.TextSize = 10
+creditLabel.TextXAlignment = Enum.TextXAlignment.Center
+
+-- Minimized state frame
+local minimizedFrame = Instance.new("Frame")
+minimizedFrame.Name = "MinimizedFrame"
+minimizedFrame.Parent = screenGui
+minimizedFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+minimizedFrame.BorderSizePixel = 0
+minimizedFrame.Position = UDim2.new(0.02, 0, 0.4, 0)
+minimizedFrame.Size = UDim2.new(0, 180, 0, 40)
+minimizedFrame.Visible = false
+minimizedFrame.Active = true
+minimizedFrame.Draggable = true
+
+local minimizedCorner = Instance.new("UICorner")
+minimizedCorner.CornerRadius = UDim.new(0, 8)
+minimizedCorner.Parent = minimizedFrame
+
+local minimizedTitle = Instance.new("TextLabel")
+minimizedTitle.Parent = minimizedFrame
+minimizedTitle.BackgroundTransparency = 1
+minimizedTitle.Position = UDim2.new(0, 10, 0, 0)
+minimizedTitle.Size = UDim2.new(0, 120, 1, 0)
+minimizedTitle.Font = Enum.Font.GothamBold
+minimizedTitle.Text = "Fly GUI - DevPhoria"
+minimizedTitle.TextColor3 = Color3.fromRGB(120, 180, 255)
+minimizedTitle.TextSize = 12
+minimizedTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+local restoreBtn = Instance.new("TextButton")
+restoreBtn.Parent = minimizedFrame
+restoreBtn.BackgroundColor3 = Color3.fromRGB(100, 180, 100)
+restoreBtn.BorderSizePixel = 0
+restoreBtn.Position = UDim2.new(1, -35, 0.5, -10)
+restoreBtn.Size = UDim2.new(0, 20, 0, 20)
+restoreBtn.Font = Enum.Font.GothamBold
+restoreBtn.Text = "+"
+restoreBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+restoreBtn.TextSize = 14
+
+local restoreCorner = Instance.new("UICorner")
+restoreCorner.CornerRadius = UDim.new(0, 10)
+restoreCorner.Parent = restoreBtn
+
+-- Utility functions
+local function createTween(object, properties, duration)
+    local tweenInfo = TweenInfo.new(duration or 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    return TweenService:Create(object, tweenInfo, properties)
+end
+
+local function updateSpeedDisplay()
+    speedDisplay.Text = tostring(flySpeed)
+end
+
+-- Fly functionality
+local function enableFly()
+    local character = player.Character
+    if not character then return end
     
-    local character = LocalPlayer.Character
     local humanoid = character:FindFirstChildOfClass("Humanoid")
-    local rootPart = character.HumanoidRootPart
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
     
-    -- Enhanced BodyVelocity with better physics
+    if not humanoid or not rootPart then return end
+    
+    -- Create BodyVelocity for movement
     bodyVelocity = Instance.new("BodyVelocity")
     bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
     bodyVelocity.Velocity = Vector3.new(0, 0, 0)
     bodyVelocity.Parent = rootPart
     
-    -- Enhanced BodyAngularVelocity for smooth rotation
+    -- Create BodyAngularVelocity for rotation
     bodyAngularVelocity = Instance.new("BodyAngularVelocity")
-    bodyAngularVelocity.MaxTorque = Vector3.new(4000, 4000, 4000)
+    bodyAngularVelocity.MaxTorque = Vector3.new(0, math.huge, 0)
     bodyAngularVelocity.AngularVelocity = Vector3.new(0, 0, 0)
     bodyAngularVelocity.Parent = rootPart
     
-    -- Optimize humanoid states
-    humanoid.PlatformStand = true
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying, false)
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-    
-    isFlying = true
-    currentVelocity = Vector3.new(0, 0, 0)
-    
-    -- Perfect flying physics loop
-    connection = RunService.Heartbeat:Connect(function(deltaTime)
-        if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or not bodyVelocity then
+    -- Movement connection
+    connection = RunService.Heartbeat:Connect(function()
+        if not character or not character.Parent then
+            disableFly()
             return
         end
         
         local camera = workspace.CurrentCamera
-        local rootPart = LocalPlayer.Character.HumanoidRootPart
-        local currentTime = tick()
+        local moveVector = humanoid.MoveDirection
+        local lookVector = camera.CFrame.LookVector
+        local rightVector = camera.CFrame.RightVector
         
-        targetVelocity = Vector3.new(0, 0, 0)
-        local isCurrentlyMoving = false
+        local velocity = Vector3.new(0, 0, 0)
         
-        -- Calculate movement direction with smooth controls
-        if movement.w then
-            targetVelocity = targetVelocity + camera.CoordinateFrame.LookVector
-            isCurrentlyMoving = true
-        end
-        if movement.s then
-            targetVelocity = targetVelocity - camera.CoordinateFrame.LookVector
-            isCurrentlyMoving = true
-        end
-        if movement.a then
-            targetVelocity = targetVelocity - camera.CoordinateFrame.RightVector
-            isCurrentlyMoving = true
-        end
-        if movement.d then
-            targetVelocity = targetVelocity + camera.CoordinateFrame.RightVector
-            isCurrentlyMoving = true
-        end
-        if movement.space then
-            targetVelocity = targetVelocity + Vector3.new(0, 1, 0)
-            isCurrentlyMoving = true
-        end
-        if movement.shift then
-            targetVelocity = targetVelocity - Vector3.new(0, 1, 0)
-            isCurrentlyMoving = true
+        if moveVector.Magnitude > 0 then
+            velocity = (lookVector * moveVector.Z + rightVector * moveVector.X) * flySpeed
         end
         
-        -- Roll controls
-        local rollVelocity = Vector3.new(0, 0, 0)
-        if movement.q then
-            rollVelocity = rollVelocity + Vector3.new(0, 0, -2)
-        end
-        if movement.e then
-            rollVelocity = rollVelocity + Vector3.new(0, 0, 2)
+        -- Handle up/down movement
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            velocity = velocity + Vector3.new(0, flySpeed, 0)
+        elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+            velocity = velocity + Vector3.new(0, -flySpeed, 0)
         end
         
-        bodyAngularVelocity.AngularVelocity = rollVelocity
-        
-        -- Normalize and apply speed
-        if targetVelocity.Magnitude > 0 then
-            targetVelocity = targetVelocity.Unit * flySpeed
-            lastMoveTime = currentTime
-        end
-        
-        -- Smooth acceleration/deceleration
-        if isCurrentlyMoving then
-            currentVelocity = currentVelocity:lerp(targetVelocity, acceleration * deltaTime * 60)
-        else
-            currentVelocity = currentVelocity:lerp(Vector3.new(0, 0, 0), deceleration * deltaTime * 60)
-        end
-        
-        -- Apply final velocity
-        bodyVelocity.Velocity = currentVelocity
-        
-        -- Update UI displays
-        if velocityLabel then
-            local speed = math.floor(currentVelocity.Magnitude * 10) / 10
-            velocityLabel.Text = "📊 Velocity: " .. speed
-        end
-        
-        if altitudeLabel then
-            local altitude = math.floor(rootPart.Position.Y)
-            altitudeLabel.Text = "🏔 Alt: " .. altitude
-        end
+        bodyVelocity.Velocity = velocity
     end)
     
-    return true
+    flyEnabled = true
+    flyToggle.Text = "Disable Fly"
+    createTween(flyToggle, {BackgroundColor3 = Color3.fromRGB(70, 100, 70)}):Play()
 end
 
-local function stopPerfectFlying()
+local function disableFly()
     if connection then
         connection:Disconnect()
         connection = nil
@@ -438,334 +354,181 @@ local function stopPerfectFlying()
         bodyAngularVelocity = nil
     end
     
-    if LocalPlayer.Character then
-        local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.PlatformStand = false
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying, true)
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
-        end
-    end
-    
-    isFlying = false
-    currentVelocity = Vector3.new(0, 0, 0)
-    
-    -- Reset all movement
-    for key, _ in pairs(movement) do
-        movement[key] = false
-    end
+    flyEnabled = false
+    flyToggle.Text = "Enable Fly"
+    createTween(flyToggle, {BackgroundColor3 = Color3.fromRGB(50, 50, 70)}):Play()
 end
 
--- Create Premium GUI
-local screenGui, mainFrame, flyButton, speedLabel, speedUpButton, speedDownButton, 
-      closeButton, minimizeButton, statusIndicator, velocityLabel, altitudeLabel, flyGlow = createPremiumGUI()
-gui = screenGui
-
--- Enhanced Button Effects
-local function createButtonEffect(button, originalColor, hoverColor)
-    button.MouseEnter:Connect(function()
-        local hoverTween = TweenService:Create(button, tweenInfo, {BackgroundColor3 = hoverColor})
-        hoverTween:Play()
-    end)
+-- Button connections
+flyToggle.MouseButton1Click:Connect(function()
+    if flyEnabled then
+        disableFly()
+    else
+        enableFly()
+    end
     
-    button.MouseLeave:Connect(function()
-        local leaveTween = TweenService:Create(button, tweenInfo, {BackgroundColor3 = originalColor})
-        leaveTween:Play()
-    end)
-end
+    -- Button animation
+    createTween(flyToggle, {Size = UDim2.new(0, 115, 0, 32)}):Play()
+    wait(0.1)
+    createTween(flyToggle, {Size = UDim2.new(0, 120, 0, 35)}):Play()
+end)
 
--- Apply button effects
-createButtonEffect(flyButton, Color3.fromRGB(50, 200, 100), Color3.fromRGB(70, 220, 120))
-createButtonEffect(speedUpButton, Color3.fromRGB(100, 255, 100), Color3.fromRGB(120, 255, 120))
-createButtonEffect(speedDownButton, Color3.fromRGB(255, 100, 100), Color3.fromRGB(255, 120, 120))
-createButtonEffect(closeButton, Color3.fromRGB(255, 60, 60), Color3.fromRGB(255, 80, 80))
-createButtonEffect(minimizeButton, Color3.fromRGB(255, 200, 50), Color3.fromRGB(255, 220, 70))
-
--- Enhanced GUI Event Handlers
-flyButton.MouseButton1Click:Connect(function()
-    if isFlying then
-        stopPerfectFlying()
-        flyButton.Text = "🚀 START FLY"
-        flyButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
-        statusIndicator.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+speedUp.MouseButton1Click:Connect(function()
+    if flySpeed < 200 then
+        flySpeed = flySpeed + 10
+        updateSpeedDisplay()
         
-        -- Remove glow effect
-        local glowTween = TweenService:Create(flyGlow, tweenInfo, {Thickness = 0, Transparency = 1})
-        glowTween:Play()
-    else
-        if startPerfectFlying() then
-            flyButton.Text = "🛑 STOP FLY"
-            flyButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-            statusIndicator.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
-            
-            -- Add glow effect
-            local glowTween = TweenService:Create(flyGlow, tweenInfo, {Thickness = 3, Transparency = 0.5})
-            glowTween:Play()
-        end
+        -- Button animation
+        createTween(speedUp, {BackgroundColor3 = Color3.fromRGB(80, 120, 80)}):Play()
+        wait(0.1)
+        createTween(speedUp, {BackgroundColor3 = Color3.fromRGB(50, 70, 50)}):Play()
     end
 end)
 
-speedUpButton.MouseButton1Click:Connect(function()
-    flySpeed = math.min(flySpeed + speedIncrement, maxSpeed)
-    speedLabel.Text = "⚡ " .. flySpeed
-    
-    -- Speed boost effect
-    local speedBoost = TweenService:Create(speedLabel, TweenInfo.new(0.1, Enum.EasingStyle.Back), 
-        {TextColor3 = Color3.fromRGB(255, 255, 100)})
-    speedBoost:Play()
-    speedBoost.Completed:Connect(function()
-        local resetColor = TweenService:Create(speedLabel, tweenInfo, {TextColor3 = Color3.fromRGB(100, 200, 255)})
-        resetColor:Play()
-    end)
-end)
-
-speedDownButton.MouseButton1Click:Connect(function()
-    flySpeed = math.max(flySpeed - speedIncrement, minSpeed)
-    speedLabel.Text = "⚡ " .. flySpeed
-    
-    -- Speed reduction effect
-    local speedReduce = TweenService:Create(speedLabel, TweenInfo.new(0.1, Enum.EasingStyle.Back), 
-        {TextColor3 = Color3.fromRGB(255, 100, 100)})
-    speedReduce:Play()
-    speedReduce.Completed:Connect(function()
-        local resetColor = TweenService:Create(speedLabel, tweenInfo, {TextColor3 = Color3.fromRGB(100, 200, 255)})
-        resetColor:Play()
-    end)
-end)
-
--- Minimize/Maximize functionality
-local isMinimized = false
-minimizeButton.MouseButton1Click:Connect(function()
-    if isMinimized then
-        -- Expand
-        local expandTween = TweenService:Create(mainFrame, tweenInfo, {Size = UDim2.new(0, 280, 0, 160)})
-        expandTween:Play()
-        minimizeButton.Text = "–"
-        isMinimized = false
-    else
-        -- Minimize
-        local minimizeTween = TweenService:Create(mainFrame, tweenInfo, {Size = UDim2.new(0, 280, 0, 35)})
-        minimizeTween:Play()
-        minimizeButton.Text = "+"
-        isMinimized = true
+speedDown.MouseButton1Click:Connect(function()
+    if flySpeed > 10 then
+        flySpeed = flySpeed - 10
+        updateSpeedDisplay()
+        
+        -- Button animation
+        createTween(speedDown, {BackgroundColor3 = Color3.fromRGB(100, 70, 70)}):Play()
+        wait(0.1)
+        createTween(speedDown, {BackgroundColor3 = Color3.fromRGB(70, 50, 50)}):Play()
     end
 end)
 
-closeButton.MouseButton1Click:Connect(function()
-    -- Smooth close animation
-    local closeTween = TweenService:Create(mainFrame, tweenInfo, {
-        Size = UDim2.new(0, 0, 0, 0),
-        Position = UDim2.new(0, 165, 0, 130)
-    })
-    closeTween:Play()
-    closeTween.Completed:Connect(function()
-        stopPerfectFlying()
-        gui:Destroy()
-    end)
+minimizeBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+    minimizedFrame.Visible = true
 end)
 
--- Enhanced Input Handling
-local boostMode = false
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    
-    local key = input.KeyCode
-    
-    -- Toggle GUI with G key
-    if key == Enum.KeyCode.G then
-        isGuiVisible = not isGuiVisible
-        if isGuiVisible then
-            local showTween = TweenService:Create(mainFrame, tweenInfo, {
-                Position = UDim2.new(0, 50, 0, 50),
-                Size = isMinimized and UDim2.new(0, 280, 0, 35) or UDim2.new(0, 280, 0, 160)
-            })
-            showTween:Play()
-        else
-            local hideTween = TweenService:Create(mainFrame, tweenInfo, {
-                Position = UDim2.new(0, -300, 0, 50),
-                Size = isMinimized and UDim2.new(0, 280, 0, 35) or UDim2.new(0, 280, 0, 160)
-            })
-            hideTween:Play()
-        end
-        return
-    end
-    
-    -- Boost mode toggle with F key
-    if key == Enum.KeyCode.F and isFlying then
-        boostMode = not boostMode
-        if boostMode then
-            flySpeed = math.min(flySpeed * 2, maxSpeed)
-            speedLabel.Text = "⚡ " .. flySpeed .. " 🔥"
-        else
-            flySpeed = math.max(flySpeed / 2, minSpeed)
-            speedLabel.Text = "⚡ " .. flySpeed
-        end
-        return
-    end
-    
-    -- Movement keys
-    if key == Enum.KeyCode.W then
-        movement.w = true
-    elseif key == Enum.KeyCode.S then
-        movement.s = true
-    elseif key == Enum.KeyCode.A then
-        movement.a = true
-    elseif key == Enum.KeyCode.D then
-        movement.d = true
-    elseif key == Enum.KeyCode.Space then
-        movement.space = true
-    elseif key == Enum.KeyCode.LeftShift then
-        movement.shift = true
-    elseif key == Enum.KeyCode.Q then
-        movement.q = true
-    elseif key == Enum.KeyCode.E then
-        movement.e = true
-    end
+restoreBtn.MouseButton1Click:Connect(function()
+    minimizedFrame.Visible = false
+    mainFrame.Visible = true
 end)
 
-UserInputService.InputEnded:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    
-    local key = input.KeyCode
-    
-    if key == Enum.KeyCode.W then
-        movement.w = false
-    elseif key == Enum.KeyCode.S then
-        movement.s = false
-    elseif key == Enum.KeyCode.A then
-        movement.a = false
-    elseif key == Enum.KeyCode.D then
-        movement.d = false
-    elseif key == Enum.KeyCode.Space then
-        movement.space = false
-    elseif key == Enum.KeyCode.LeftShift then
-        movement.shift = false
-    elseif key == Enum.KeyCode.Q then
-        movement.q = false
-    elseif key == Enum.KeyCode.E then
-        movement.e = false
-    end
+closeBtn.MouseButton1Click:Connect(function()
+    disableFly()
+    screenGui:Destroy()
 end)
 
--- Auto-stop flying on character respawn
-LocalPlayer.CharacterAdded:Connect(function()
+-- Auto-disable fly when character respawns
+player.CharacterAdded:Connect(function()
     wait(1)
-    if isFlying then
-        stopPerfectFlying()
-        flyButton.Text = "🚀 START FLY"
-        flyButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
-        statusIndicator.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-        
-        -- Reset glow effect
-        local glowTween = TweenService:Create(flyGlow, tweenInfo, {Thickness = 0, Transparency = 1})
-        glowTween:Play()
+    if flyEnabled then
+        disableFly()
     end
 end)
 
--- Smooth GUI entrance animation
-local function playEntranceAnimation()
-    mainFrame.Position = UDim2.new(0, -300, 0, 50)
-    mainFrame.Size = UDim2.new(0, 0, 0, 0)
+-- Welcome notification
+StarterGui:SetCore("SendNotification", {
+    Title = "Modern Fly GUI V4";
+    Text = "Created by DevPhoria - Press SPACE/SHIFT for up/down movement";
+    Duration = 5;
+})
+
+-- Mobile support - touch controls
+if UserInputService.TouchEnabled then
+    -- Adjust GUI size for mobile
+    mainFrame.Size = UDim2.new(0, 300, 0, 180)
     
-    local entranceTween = TweenService:Create(mainFrame, 
-        TweenInfo.new(0.8, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-        {
-            Position = UDim2.new(0, 50, 0, 50),
-            Size = UDim2.new(0, 280, 0, 160)
-        }
-    )
-    entranceTween:Play()
-end
-
--- Performance optimization for mobile devices
-local function optimizePerformance()
-    if UserInputService.TouchEnabled then
-        -- Reduce update frequency on mobile
-        acceleration = 0.7
-        deceleration = 0.85
-        speedIncrement = 4
-    end
-end
-
--- Initialize optimizations
-optimizePerformance()
-
--- Advanced keybind system
-local keybinds = {
-    toggleGui = Enum.KeyCode.G,
-    boostMode = Enum.KeyCode.F,
-    quickStop = Enum.KeyCode.X,
-    resetPosition = Enum.KeyCode.R
-}
-
--- Quick stop functionality
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed or not isFlying then return end
+    -- Create touch controls for up/down movement
+    local mobileControls = Instance.new("Frame")
+    mobileControls.Name = "MobileControls"
+    mobileControls.Parent = screenGui
+    mobileControls.BackgroundTransparency = 1
+    mobileControls.Position = UDim2.new(1, -120, 0.5, -50)
+    mobileControls.Size = UDim2.new(0, 100, 0, 100)
     
-    if input.KeyCode == keybinds.quickStop then
-        currentVelocity = Vector3.new(0, 0, 0)
-        if bodyVelocity then
-            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-        end
-    elseif input.KeyCode == keybinds.resetPosition then
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0)
-        end
-    end
-end)
-
--- Enhanced notification system
-local function showNotification(title, text, duration, color)
-    StarterGui:SetCore("SendNotification", {
-        Title = title;
-        Text = text;
-        Duration = duration or 5;
-        Button1 = "OK";
-    })
-end
-
--- Play entrance animation
-playEntranceAnimation()
-
--- Welcome notification with enhanced styling
-showNotification(
-    "✈️ Perfect Fly Script Loaded | DevPhoria",
-    "🎮 G: Toggle GUI | F: Boost Mode | X: Quick Stop\n🚀 Enhanced physics & premium UI loaded!",
-    8
-)
-
--- Performance monitoring
-local lastFPS = 0
-local fpsConnection = RunService.Heartbeat:Connect(function()
-    lastFPS = math.floor(1 / RunService.Heartbeat:Wait())
+    local upBtn = Instance.new("TextButton")
+    upBtn.Parent = mobileControls
+    upBtn.BackgroundColor3 = Color3.fromRGB(100, 180, 100)
+    upBtn.BorderSizePixel = 0
+    upBtn.Size = UDim2.new(1, 0, 0, 45)
+    upBtn.Font = Enum.Font.GothamBold
+    upBtn.Text = "UP"
+    upBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    upBtn.TextSize = 16
     
-    -- Auto-optimize if low FPS detected
-    if lastFPS < 30 and isFlying then
-        acceleration = math.max(acceleration - 0.01, 0.5)
-        deceleration = math.max(deceleration - 0.01, 0.7)
-    end
-end)
-
--- Auto-save settings (using game variables since no localStorage)
-local savedSettings = {
-    flySpeed = flySpeed,
-    lastPosition = mainFrame.Position
-}
-
--- Cleanup function
-local function cleanup()
+    local upCorner = Instance.new("UICorner")
+    upCorner.CornerRadius = UDim.new(0, 8)
+    upCorner.Parent = upBtn
+    
+    local downBtn = Instance.new("TextButton")
+    downBtn.Parent = mobileControls
+    downBtn.BackgroundColor3 = Color3.fromRGB(180, 100, 100)
+    downBtn.BorderSizePixel = 0
+    downBtn.Position = UDim2.new(0, 0, 0, 55)
+    downBtn.Size = UDim2.new(1, 0, 0, 45)
+    downBtn.Font = Enum.Font.GothamBold
+    downBtn.Text = "DOWN"
+    downBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    downBtn.TextSize = 16
+    
+    local downCorner = Instance.new("UICorner")
+    downCorner.CornerRadius = UDim.new(0, 8)
+    downCorner.Parent = downBtn
+    
+    -- Mobile up/down functionality
+    local mobileUpPressed = false
+    local mobileDownPressed = false
+    
+    upBtn.MouseButton1Down:Connect(function()
+        mobileUpPressed = true
+    end)
+    
+    upBtn.MouseButton1Up:Connect(function()
+        mobileUpPressed = false
+    end)
+    
+    downBtn.MouseButton1Down:Connect(function()
+        mobileDownPressed = true
+    end)
+    
+    downBtn.MouseButton1Up:Connect(function()
+        mobileDownPressed = false
+    end)
+    
+    -- Update fly function for mobile
     if connection then connection:Disconnect() end
-    if fpsConnection then fpsConnection:Disconnect() end
-    stopPerfectFlying()
+    connection = RunService.Heartbeat:Connect(function()
+        if not flyEnabled then return end
+        
+        local character = player.Character
+        if not character or not character.Parent then
+            disableFly()
+            return
+        end
+        
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        local camera = workspace.CurrentCamera
+        
+        if not humanoid or not bodyVelocity then return end
+        
+        local moveVector = humanoid.MoveDirection
+        local lookVector = camera.CFrame.LookVector
+        local rightVector = camera.CFrame.RightVector
+        
+        local velocity = Vector3.new(0, 0, 0)
+        
+        if moveVector.Magnitude > 0 then
+            velocity = (lookVector * moveVector.Z + rightVector * moveVector.X) * flySpeed
+        end
+        
+        -- Handle up/down movement (keyboard or mobile)
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) or mobileUpPressed then
+            velocity = velocity + Vector3.new(0, flySpeed, 0)
+        elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or mobileDownPressed then
+            velocity = velocity + Vector3.new(0, -flySpeed, 0)
+        end
+        
+        bodyVelocity.Velocity = velocity
+    end)
+    
+    -- Show mobile controls only when flying
+    mobileControls.Visible = false
+    flyToggle.MouseButton1Click:Connect(function()
+        wait(0.1)
+        mobileControls.Visible = flyEnabled
+    end)
 end
-
--- Auto-cleanup on script reload
-game.Players.PlayerRemoving:Connect(cleanup)
-
-print("🚀 Perfect Fly Script v2.0 Loaded Successfully!")
-print("📋 Commands: G (GUI), F (Boost), X (Stop), R (Reset)")
-print("⚡ Enhanced Physics & Premium UI Active!")
-print("🎯 DevPhoria - Perfect Flight Experience!")
